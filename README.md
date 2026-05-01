@@ -8,7 +8,7 @@
 | | URL |
 |---|---|
 | **Frontend (Netlify)** | https://delicate-trifle-2c1747.netlify.app |
-| **Backend API (Railway)** | https://YOUR-RAILWAY-URL.up.railway.app |
+| **Backend API (Railway)** | https://cs348-fintrack-production.up.railway.app |
 | **GitHub Repo** | https://github.com/chou162/cs348-fintrack |
 
 ---
