@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 
-const API = "http://localhost:5000/api";
+const API = "https://cs348-fintrack-production.up.railway.app/api";
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 const fmt = (n) =>
