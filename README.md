@@ -1,62 +1,113 @@
 # 💰 Fintrack — Personal Finance Tracker
+### CS348 Database Systems — Purdue University
 ### React + Python Flask + SQLite
 
 ---
 
-## Project Structure
+## 🌐 Live Application
+| | URL |
+|---|---|
+| **Frontend (Netlify)** | https://delicate-trifle-2c1747.netlify.app |
+| **Backend API (Railway)** | https://YOUR-RAILWAY-URL.up.railway.app |
+| **GitHub Repo** | https://github.com/chou162/cs348-fintrack |
+
+---
+
+## 📁 Project Structure
 
 ```
-finance-tracker/
-├── backend/
-│   ├── app.py           ← Flask API (all routes)
-│   └── requirements.txt
-└── frontend/
-    └── src/
-        └── App.jsx      ← Full React app (single file)
+cs348-fintrack/
+├── client/                  ← React frontend (Vite)
+│   ├── src/
+│   │   └── App.jsx          ← Full React app (single file)
+│   ├── package.json
+│   └── vite.config.js
+├── backend.py               ← Flask API + SQLite database
+├── requirements.txt         ← Python dependencies
+├── Procfile                 ← Railway deployment config
+└── README.md
 ```
 
 ---
 
-## 1. Backend Setup (Python + Flask)
+## 🗄️ Database Design
 
-```bash
-cd backend
+### Tables
 
-# Install dependencies
-pip install flask flask-cors
+| Table | Primary Key | Foreign Keys |
+|---|---|---|
+| Accounts | account_id (INTEGER, AUTOINCREMENT) | — |
+| Categories | category_id (INTEGER, AUTOINCREMENT) | — |
+| Transactions | transaction_id (INTEGER, AUTOINCREMENT) | account_id → Accounts, category_id → Categories |
 
-# Run the server
-python app.py
+### Indexes
+
+| Index | Column | Supports |
+|---|---|---|
+| idx_transactions_date | Transactions.date | Date range filter on Transactions report |
+| idx_transactions_type | Transactions.type | Dashboard income/expense summary totals |
+| idx_transactions_category | Transactions.category_id | Dashboard spending-by-category report |
+| idx_transactions_account | Transactions.account_id | Account filter on Transactions report |
+
+### Relationships
+- `Transactions.account_id` → `Accounts.account_id` (Many-to-One)
+- `Transactions.category_id` → `Categories.category_id` (Many-to-One)
+
+---
+
+## 🔒 Security — SQL Injection Protection
+
+All user-supplied values are bound via `?` parameterized query placeholders.
+User input is **never** concatenated into SQL strings directly.
+
+```python
+# SAFE — what we do
+conn.execute(
+    'INSERT INTO Transactions (amount, description) VALUES (?, ?)',
+    (data['amount'], data['description'])
+)
+
+# DANGEROUS — what we never do
+conn.execute(f"INSERT INTO Transactions (description) VALUES ('{data['description']}')")
 ```
 
+URL parameters use Flask's `<int:tx_id>` type annotation, which rejects
+non-integer values before any SQL runs.
+
+---
+
+## 🔄 Transactions & Isolation
+
+- All writes (INSERT, UPDATE, DELETE) are wrapped in explicit `BEGIN / COMMIT / ROLLBACK` blocks
+- WAL (Write-Ahead Logging) mode enabled — readers never block writers
+- Isolation level: **SERIALIZABLE** (SQLite's only level, enforced via `PRAGMA read_uncommitted=0`)
+
+---
+
+## 🚀 Running Locally
+
+### Backend
+```bash
+# From repo root
+pip install flask flask-cors
+py backend.py
+```
 Backend runs on: **http://localhost:5000**
 SQLite database (`finance.db`) is auto-created with seed data on first run.
 
----
-
-## 2. Frontend Setup (React)
-
+### Frontend
 ```bash
-
-npm install    # if not done already
-npm run dev    # or npm start
+cd client
+npm install
+npm run dev
 ```
+Frontend runs on: **http://localhost:5173**
 
-Frontend runs on: **http://localhost:5173** (Vite) or **http://localhost:3000** (CRA)
-
----
-
-## Database Tables
-
-| Table | PK | FKs |
-|---|---|---|
-| Accounts | account_id | — |
-| Categories | category_id | — |
-| Transactions | transaction_id | account_id → Accounts, category_id → Categories |
+> For local development, make sure `App.jsx` has `const API = "http://localhost:5000/api"`
 
 ---
 
-## API Endpoints
+## 📡 API Endpoints
 
 | Method | Route | Description |
 |---|---|---|
@@ -71,9 +122,14 @@ Frontend runs on: **http://localhost:5173** (Vite) or **http://localhost:3000** 
 | PUT | /api/transactions/:id | Update transaction |
 | DELETE | /api/transactions/:id | Delete transaction |
 | GET | /api/summary | Dashboard summary stats |
+| GET | /api/explain | EXPLAIN QUERY PLAN (shows index usage) |
 
-### Filtering Transactions
+### Filter Query Example
 ```
-GET /api/transactions?date_from=2024-03-01&date_to=2024-03-31&amount_min=50&amount_max=500&category_id=1&type=expense
+GET /api/transactions?date_from=2024-03-01&date_to=2024-03-31&amount_min=50&amount_max=500&type=expense
 ```
 
+### Deployment (Extra Credit)
+- Backend hosted on **Railway**
+- Frontend hosted on **Netlify**
+- Live and accessible between May 1–15, 2026
